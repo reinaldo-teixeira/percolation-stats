@@ -40,7 +40,7 @@ public class Percolation {
     }
 
     private int getMatrixIndex(int row, int col) {
-        return (n * n + 1) - ((n * n + 1) - (row * n)) + (col - 1);
+        return (n * n + 1) - ((n * n + 1) - ((row - 1) * n)) + (col - 1);
     }
 
     public void open(int row, int col) {

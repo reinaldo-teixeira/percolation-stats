@@ -1,47 +1,66 @@
+import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.StdRandom;
 import edu.princeton.cs.algs4.StdStats;
-import edu.princeton.cs.algs4.StdIn;
+import edu.princeton.cs.algs4.Stopwatch;
 
 public class PercolationStats {
-      int tries;
+      int[] attempts;
+      int trials;
 
-      // perform independent trials on an n-by-n grid
       public PercolationStats(int n, int trials) {
+        if (n <= 0 || trials <= 0) {
+          throw new IllegalArgumentException("n and trials must be greater than 0");
+        }
 
+        this.trials = trials;
+        
+        attempts = new int[trials];
+
+        for (int i = 0; i < trials; i++) {
+          Percolation percolation = new Percolation(n);
+
+          while(percolation.percolates() == false) {
+            int row = StdRandom.uniformInt(1, n + 1);
+            int col = StdRandom.uniformInt(1, n + 1);
+
+            percolation.open(row, col);
+
+            if (percolation.percolates()) {
+              int openSites = percolation.numberOfOpenSites();
+              attempts[i] = openSites / (n * n);
+            }
+          }
+        }
       }
 
-      // sample mean of percolation threshold
       public double mean() {
-        return 0;
-
+        return StdStats.mean(attempts);
       }
   
-      // sample standard deviation of percolation threshold
       public double stddev() {
-        return 0;
+        return StdStats.stddev(attempts);
 
       }
   
-      // low endpoint of 95% confidence interval
       public double confidenceLo() {
-        return 0;
-
+        return mean() - 1.96 * stddev() / Math.sqrt(trials);
       }
   
-      // high endpoint of 95% confidence interval
       public double confidenceHi() {
-        return 0;
+        return  mean() + 1.96 * stddev() / Math.sqrt(trials);
       }
   
-     // test client (see below)
      public static void main(String[] args) {
-      int n = 4;
+        Stopwatch stopwatch = new Stopwatch();
 
-      Percolation p = new Percolation(n);
+        PercolationStats p = new PercolationStats(200, 100);
 
-      while(p.percolates() == false) {
-        p.open(StdRandom.uniformInt(0, n - 1), StdRandom.uniformInt(n, n - 1));
-        p.numberOfOpenSites();
-      }
+        StdOut.println("mean                    = " + p.mean());
+        StdOut.println("stddev                  = " + p.stddev());
+        StdOut.println("95% confidence interval = [" + p.confidenceLo() + ", " + p.confidenceHi() + "]");
+
+        double time = stopwatch.elapsedTime();
+
+        StdOut.println("Time elapsed: " + time);
      }
 }
