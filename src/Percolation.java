@@ -9,21 +9,6 @@ public class Percolation {
     private int bottomVirtualSite;
     private int openSitesCount;
 
-    private void loadTopAndBottomVirtualSites(int n) {
-        topVirtualSite = n * n;
-        bottomVirtualSite = n * n + 1;
-
-        for (int i = 0; i < n; i++) {
-            uf.union(topVirtualSite, i);
-        }
-
-        int lastPosition = n * n - 1;
-
-        for (int i = (n * n - 4); i <= lastPosition; i++) {
-            uf.union(bottomVirtualSite, i);
-        }
-    }
-
     public Percolation(int n) {
         if (n <= 0) {
             throw new IllegalArgumentException("n must be greater than 0");
@@ -34,13 +19,26 @@ public class Percolation {
 
         uf = new WeightedQuickUnionUF(n * n + 2);
 
-        loadTopAndBottomVirtualSites(n);
+        loadTopAndBottomVirtualSites();
 
         openSitesCount = 0;
     }
 
+    private void loadTopAndBottomVirtualSites() {
+        topVirtualSite = n * n;
+        bottomVirtualSite = n * n + 1;
+
+        for (int col = 1; col <= n; col++) {
+            uf.union(topVirtualSite, getMatrixIndex(1, col));
+        }
+
+        for (int col = 1; col <= n; col++) {
+            uf.union(bottomVirtualSite, getMatrixIndex(n, col));
+        }
+    }
+
     private int getMatrixIndex(int row, int col) {
-        return (n * n + 1) - ((n * n + 1) - ((row - 1) * n)) + (col - 1);
+        return (n * (row - 1)) + (col - 1); // getting the correct index in the matrix, where row and col are 1-based
     }
 
     public void open(int row, int col) {
@@ -49,27 +47,19 @@ public class Percolation {
         int rowIndex = getCorrectIndex(row);
         int colIndex = getCorrectIndex(col);
 
-        if (matrix[rowIndex][colIndex]) {
-            return;
-        }
-
         if (rowIndex > 0 && matrix[rowIndex - 1][colIndex]) {
-            openSitesCount++;
             uf.union(getMatrixIndex(row, col), getMatrixIndex(row - 1, col));
         }
 
         if ((rowIndex + 1) < n && matrix[rowIndex + 1][colIndex]) {
-            openSitesCount++;
             uf.union(getMatrixIndex(row, col), getMatrixIndex(row + 1, col));
         }
 
         if (colIndex > 0 && matrix[rowIndex][colIndex - 1]) {
-            openSitesCount++;
             uf.union(getMatrixIndex(row, col), getMatrixIndex(row, col - 1));
         }
 
         if ((colIndex + 1) < n && matrix[rowIndex][colIndex + 1]) {
-            openSitesCount++;
             uf.union(getMatrixIndex(row, col), getMatrixIndex(row, col + 1));
         }
 
@@ -83,11 +73,7 @@ public class Percolation {
         int rowIndex = getCorrectIndex(row);
         int colIndex = getCorrectIndex(col);
 
-        if (matrix[rowIndex][colIndex]) {
-            return true;
-        }
-
-        return false;
+        return matrix[rowIndex][colIndex];
     }
 
     public int numberOfOpenSites() {
@@ -100,19 +86,14 @@ public class Percolation {
         int rowIndex = getCorrectIndex(row);
         int colIndex = getCorrectIndex(col);
 
-        if (matrix[rowIndex][colIndex] &&
-                (colIndex > 0 && matrix[rowIndex][colIndex - 1]) &&
-                (colIndex < n && matrix[rowIndex][colIndex + 1]) &&
-                (rowIndex < n && matrix[rowIndex + 1][colIndex]) &&
-                (rowIndex > 0 && matrix[rowIndex - 1][colIndex])) {
-            return true;
-        }
-
-        return false;
+        return matrix[rowIndex][colIndex] && uf.find(topVirtualSite) == uf.find(getMatrixIndex(row, col));
     }
 
     public boolean percolates() {
-        return uf.find(topVirtualSite) == uf.find(bottomVirtualSite);
+        if (n == 1) {
+            return isOpen(1, 1);
+        }
+        return openSitesCount > 0 && uf.find(topVirtualSite) == uf.find(bottomVirtualSite);
     }
 
     private void validateIndices(int row, int col) {
